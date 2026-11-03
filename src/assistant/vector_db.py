@@ -9,6 +9,7 @@ VECTOR_DB_PATH = "database"
  
 def get_or_create_vector_db():
     """Get or create the vector DB."""
+    os.makedirs("./files", exist_ok=True)
     embeddings = HuggingFaceEmbeddings()
 
     if os.path.exists(VECTOR_DB_PATH) and os.listdir(VECTOR_DB_PATH):
@@ -18,6 +19,8 @@ def get_or_create_vector_db():
         # Load documents and create a new vector store
         loader = DirectoryLoader("./files")
         docs = loader.load()
+        if not docs:
+            return None
 
         # Process the new documents
         semantic_text_splitter = SemanticChunker(embeddings)

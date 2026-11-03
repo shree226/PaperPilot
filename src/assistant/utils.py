@@ -1,7 +1,6 @@
 import os
 import re
 import shutil
-from ollama import chat
 from tavily import TavilyClient
 from pydantic import BaseModel
 from langchain_community.document_loaders import CSVLoader, TextLoader, PDFPlumberLoader
@@ -14,8 +13,13 @@ class Queries(BaseModel):
     queries: list[str]
 
 def parse_output(text):
-    think = re.search(r'<think>(.*?)</think>', text, re.DOTALL).group(1).strip()
-    output = re.search(r'</think>\s*(.*?)$', text, re.DOTALL).group(1).strip()
+    if not isinstance(text, str):
+        text = str(text)
+
+    think_match = re.search(r'<think>(.*?)</think>', text, re.DOTALL)
+    think = think_match.group(1).strip() if think_match else ""
+    output_match = re.search(r'</think>\s*(.*?)$', text, re.DOTALL)
+    output = output_match.group(1).strip() if output_match else text.strip()
 
     return {
         "reasoning": think,
@@ -40,22 +44,6 @@ def format_documents_with_metadata(documents):
 
     return "\n\n---\n\n".join(formatted_docs)
 
-def invoke_ollama(model, system_prompt, user_prompt, output_format=None):
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt}
-    ]
-    response = chat(
-        messages=messages,
-        model=model,
-        format=output_format.model_json_schema() if output_format else None
-    )
-
-    if output_format:
-        return output_format.model_validate_json(response.message.content)
-    else:
-        return response.message.content
-    
 def invoke_llm(
     model,  # Specify the model name from OpenRouter
     system_prompt,
@@ -63,12 +51,17 @@ def invoke_llm(
     output_format=None,
     temperature=0
 ):
-        
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "OPENROUTER_API_KEY is not configured. Add it to the .env file and restart the website."
+        )
+
     from langchain_openai import ChatOpenAI
     llm = ChatOpenAI(
         model=model, 
         temperature=temperature,
-        openai_api_key=os.getenv("OPENROUTER_API_KEY"),
+        openai_api_key=api_key,
         openai_api_base= "https://openrouter.ai/api/v1",
     )
     

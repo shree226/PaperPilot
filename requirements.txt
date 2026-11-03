@@ -11,6 +11,5 @@ python-dotenv
 tavily-python
 ollama
 streamlit
-streamlit_nested_layout
 pdfplumber
 pyperclip

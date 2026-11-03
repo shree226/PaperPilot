@@ -7,7 +7,7 @@ from src.assistant.configuration import Configuration
 from src.assistant.vector_db import get_or_create_vector_db
 from src.assistant.state import ResearcherState, ResearcherStateInput, ResearcherStateOutput, QuerySearchState, QuerySearchStateInput, QuerySearchStateOutput
 from src.assistant.prompts import RESEARCH_QUERY_WRITER_PROMPT, RELEVANCE_EVALUATOR_PROMPT, SUMMARIZER_PROMPT, REPORT_WRITER_PROMPT
-from src.assistant.utils import format_documents_with_metadata, invoke_llm, invoke_ollama, parse_output, tavily_search, Evaluation, Queries
+from src.assistant.utils import format_documents_with_metadata, invoke_llm, parse_output, tavily_search, Evaluation, Queries
 
 # Number of query to process in parallel for each batch
 # Change depending on the performance of the system
@@ -23,9 +23,8 @@ def generate_research_queries(state: ResearcherState, config: RunnableConfig):
         date=datetime.datetime.now().strftime("%Y/%m/%d %H:%M")
     )
     
-    # Using local Deepseek R1 model with Ollama
-    result = invoke_ollama(
-        model='deepseek-r1:7b',
+    result = invoke_llm(
+        model='openai/gpt-4o-mini',
         system_prompt=query_writer_prompt,
         user_prompt=f"Generate research queries for this user instruction: {user_instructions}",
         output_format=Queries
@@ -87,6 +86,8 @@ def retrieve_rag_documents(state: QuerySearchState):
     print("--- Retrieving documents ---")
     query = state["query"]
     vectorstore = get_or_create_vector_db()
+    if vectorstore is None:
+        return {"retrieved_documents": []}
     vectorstore_retreiver = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 3})
     documents = vectorstore_retreiver.invoke(query)
 
@@ -100,9 +101,8 @@ def evaluate_retrieved_documents(state: QuerySearchState):
         documents=format_documents_with_metadata(retrieved_documents)
     )
     
-    # Using local Deepseek R1 model with Ollama
-    evaluation = invoke_ollama(
-        model='deepseek-r1:7b',
+    evaluation = invoke_llm(
+        model='openai/gpt-4o-mini',
         system_prompt=evaluation_prompt,
         user_prompt=f"Evaluate the relevance of the retrieved documents for this query: {query}",
         output_format=Evaluation
@@ -153,13 +153,11 @@ def summarize_query_research(state: QuerySearchState):
         docmuents=information
     )
     
-    # Using local Deepseek R1 model with Ollama
-    summary = invoke_ollama(
-        model='deepseek-r1:7b',
+    summary = invoke_llm(
+        model='openai/gpt-4o-mini',
         system_prompt=summary_prompt,
         user_prompt=f"Generate a research summary for this query: {query}"
     )
-    # Remove thinking part (reasoning between <think> tags)
     summary = parse_output(summary)["response"]
     
     # Using external LLM providers with OpenRouter: GPT-4o, Claude, Deepseek R1,... 
@@ -180,13 +178,11 @@ def generate_final_answer(state: ResearcherState, config: RunnableConfig):
         information="\n\n---\n\n".join(state["search_summaries"])
     )
 
-    # Using local Deepseek R1 model with Ollama
-    result = invoke_ollama(
-        model='deepseek-r1:7b',
+    result = invoke_llm(
+        model='openai/gpt-4o-mini',
         system_prompt=answer_prompt,
         user_prompt=f"Generate a research summary using the provided information."
     )
-    # Remove thinking part (reasoning between <think> tags)
     answer = parse_output(result)["response"]
     
     # # Using external LLM providers with OpenRouter: GPT-4o, Claude, Deepseek R1,... 

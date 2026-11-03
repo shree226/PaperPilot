@@ -1,11 +1,11 @@
 import pyperclip
 import streamlit as st
-import streamlit_nested_layout
 from src.assistant.graph import researcher
 from src.assistant.utils import get_report_structures, process_uploaded_files
+from src.assistant.configuration import DEFAULT_REPORT_STRUCTURE
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(dotenv_path=".env")
 
 def generate_response(user_input, enable_web_search, report_structure, max_search_queries):
     """
@@ -34,25 +34,30 @@ def generate_response(user_input, enable_web_search, report_structure, max_searc
 
         steps = []
 
-        # Run the researcher graph and stream outputs
-        for output in researcher.stream(initial_state, config=config):
-            for key, value in output.items():
-                expander_label = key.replace("_", " ").title()
+        try:
+            # Run the researcher graph and stream outputs
+            for output in researcher.stream(initial_state, config=config):
+                for key, value in output.items():
+                    expander_label = key.replace("_", " ").title()
 
-                if key == "generate_research_queries":
-                    with generate_queries_expander:
-                        st.write(value)
-
-                elif key.startswith("search_and_summarize_query"):
-                    with search_queries_expander:
-                        with st.expander(expander_label, expanded=False):
+                    if key == "generate_research_queries":
+                        with generate_queries_expander:
+                            st.write(value)
+                    elif key.startswith("search_and_summarize_query"):
+                        with search_queries_expander:
+                            with st.expander(expander_label, expanded=False):
+                                st.write(value)
+                    elif key == "generate_final_answer":
+                        with final_answer_expander:
                             st.write(value)
 
-                elif key == "generate_final_answer":
-                    with final_answer_expander:
-                        st.write(value)
-
-                steps.append({"step": key, "content": value})
+                    steps.append({"step": key, "content": value})
+        except Exception as exc:
+            langgraph_status.update(
+                state="complete",
+                label="Research could not be completed"
+            )
+            return {"final_answer": f"Unable to complete the research request: {exc}"}
 
     # Update status to complete
     langgraph_status.update(state="complete", label="**Using Langgraph** (Research completed)")
@@ -98,10 +103,21 @@ def main():
     report_structures = get_report_structures()
     default_report = "standard report"
 
+    if not report_structures:
+        report_structures = {
+            "Standard Report": {"content": DEFAULT_REPORT_STRUCTURE}
+        }
+
+    report_names = list(report_structures.keys())
+    default_index = next(
+        (index for index, name in enumerate(report_names) if name.lower() == default_report),
+        0
+    )
+
     selected_structure = st.sidebar.selectbox(
         "Select Report Structure",
-        options=list(report_structures.keys()),
-        index=list(map(str.lower, report_structures.keys())).index(default_report)
+        options=report_names,
+        index=default_index
     )
 
     st.session_state.selected_report_structure = report_structures[selected_structure]

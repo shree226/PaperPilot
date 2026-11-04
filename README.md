@@ -12,3 +12,4 @@ Researchers commonly need to compare papers, validate claims, identify gaps, and
   
 Project Framing:
 Researchers waste time manually searching, comparing, and synthesizing academic papers while existing AI tools provide unauthenticated answers that cannot be traced back to specific documents. PaperPilot is a source-grounded research assistant that isolates document collections per chat, retrieves relevant evidence from Chroma embeddings, and generates controllable outputs such as comparisons, literature syntheses, gap analyses, methodology audits, and evidence tables.
+PaperPilot is a controllable Retrieval-Augmented Generation platform for source-grounded academic research. It indexes selected papers into isolated vector collections, retrieves relevant evidence, and generates controlled comparisons, literature syntheses, methodology audits, gap analyses, and evidence tables with traceable sources.

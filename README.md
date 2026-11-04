@@ -185,3 +185,14 @@ git add .gitignore .env.example README.md
 ## License
 
 Add a LICENSE file before publishing the repository publicly.
+
+## Project framing
+
+### Problem
+
+Researchers need to compare papers, validate claims, identify gaps, and inspect evidence across documents. Existing chat interfaces often forget document context, mix evidence across collections, produce convincing answers without source attribution, and expose no clear evidence trail.
+
+### Solution
+
+PaperPilot is a source-grounded, controllable Retrieval-Augmented Generation platform for academic research. It isolates document collections per chat, retrieves relevant evidence from Chroma embeddings, preserves follow-up context, and generates controlled comparisons, literature syntheses, gap analyses, methodology audits, evidence tables, and executive summaries with traceable sources.
+

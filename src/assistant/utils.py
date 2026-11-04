@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+import time
 from tavily import TavilyClient
 from pydantic import BaseModel
 from langchain_community.document_loaders import CSVLoader, TextLoader, PDFPlumberLoader
@@ -38,8 +39,10 @@ def format_documents_with_metadata(documents):
     """
     formatted_docs = []
     for doc in documents:
-        source = doc.metadata.get('source', 'Unknown source')
-        formatted_doc = f"Source: {source}\nContent: {doc.page_content}"
+        source = doc.metadata.get("source", "Unknown source")
+        page = doc.metadata.get("page") or doc.metadata.get("page_number")
+        location = f", page {int(page) + 1}" if str(page).isdigit() else ""
+        formatted_doc = f"Source: {source}{location}\nContent: {doc.page_content}"
         formatted_docs.append(formatted_doc)
 
     return "\n\n---\n\n".join(formatted_docs)
@@ -135,7 +138,7 @@ def get_report_structures(reports_folder="report_structures"):
 
     return report_structures
 
-def process_uploaded_files(uploaded_files):
+def process_uploaded_files(uploaded_files, collection_id="default"):
     temp_folder = "temp_files"
     os.makedirs(temp_folder, exist_ok=True)
 
@@ -160,7 +163,10 @@ def process_uploaded_files(uploaded_files):
 
             # Load and append documents
             docs = loader.load()
-            add_documents(docs)
+            for doc in docs:
+                doc.metadata["collection_id"] = collection_id
+                doc.metadata["source"] = uploaded_file.name
+            add_documents(docs, collection_id=collection_id)
 
         return True
     finally:

@@ -18,8 +18,10 @@ def generate_research_queries(state: ResearcherState, config: RunnableConfig):
     user_instructions = state["user_instructions"]
     max_queries = config["configurable"].get("max_search_queries", 3)
     
+    report_format = config["configurable"].get("report_structure", "Standard report")
     query_writer_prompt = RESEARCH_QUERY_WRITER_PROMPT.format(
         max_queries=max_queries,
+        report_format=report_format,
         date=datetime.datetime.now().strftime("%Y/%m/%d %H:%M")
     )
     
@@ -81,14 +83,15 @@ def initiate_query_research(state: ResearcherState):
         for s in current_batch
     ]
 
-def retrieve_rag_documents(state: QuerySearchState):
-    """Retrieve documents from the RAG database."""
+def retrieve_rag_documents(state: QuerySearchState, config: RunnableConfig):
+    """Retrieve documents from the current chat/paper collection."""
     print("--- Retrieving documents ---")
     query = state["query"]
-    vectorstore = get_or_create_vector_db()
+    collection_id = config["configurable"].get("collection_id", "default")
+    vectorstore = get_or_create_vector_db(collection_id)
     if vectorstore is None:
         return {"retrieved_documents": []}
-    vectorstore_retreiver = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+    vectorstore_retreiver = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 6})
     documents = vectorstore_retreiver.invoke(query)
 
     return {"retrieved_documents": documents}
@@ -175,7 +178,7 @@ def generate_final_answer(state: ResearcherState, config: RunnableConfig):
     answer_prompt = REPORT_WRITER_PROMPT.format(
         instruction=state["user_instructions"],
         report_structure=report_structure,
-        information="\n\n---\n\n".join(state["search_summaries"])
+        information="\n\n---\n\n".join(state.get("search_summaries", [])) or "No relevant indexed evidence was retrieved."
     )
 
     result = invoke_llm(

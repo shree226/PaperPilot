@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Local configuration and secrets
+.env
+
+# Application-generated data
+.paperpilot/
+database/
+files/
+temp_files/
+
+# Hugging Face and package caches
+.cache/
+
+# Editor and OS files
+.vscode/
+.DS_Store

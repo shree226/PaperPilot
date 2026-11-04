@@ -1,5 +1,6 @@
 langgraph
 langchain-core
+langchain-community
 langchain_openai
 langchain_experimental
 langchain_text_splitters
@@ -13,3 +14,6 @@ ollama
 streamlit
 pdfplumber
 pyperclip
+sentence-transformers
+pytest
+reportlab

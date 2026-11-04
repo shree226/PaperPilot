@@ -28,3 +28,4 @@ class QuerySearchStateInput(TypedDict):
 class QuerySearchStateOutput(TypedDict):
     query: str
     search_summaries: list[str]
+    retrieved_documents: list

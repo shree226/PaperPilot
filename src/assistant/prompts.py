@@ -10,7 +10,12 @@ Your output must only be a JSON object containing a single key "queries":
 * Focus on the user's intent and break down complex tasks into manageable queries.
 * Avoid generating excessive or redundant queries.
 * Ensure the queries are specific enough to retrieve relevant information but broad enough to cover the scope of the task.
+* Adapt the queries to the requested output format below. For comparisons, retrieve objective, methods, findings, limitations, and conclusions. For gap analysis, retrieve limitations, open questions, missing datasets, and future work. For evidence tables, retrieve explicit claims and supporting evidence.
 * If the instruction is ambiguous, generate queries that address possible interpretations.
+
+# REQUESTED OUTPUT FORMAT
+{report_format}
+
 * **Today is: {date}**
 """
 
@@ -72,7 +77,11 @@ PROVIDED INFORMATION:
 
 # **CRITICAL GUIDELINES:**
 - Adhere strictly to the structure specified in the user's instruction.
-- Start IMMEDIATELY with the summary content - no introductions or meta-commentary
-- Focus ONLY on factual, objective information
+- Start IMMEDIATELY with the summary content - no introductions or meta-commentary.
+- Use only facts supported by the PROVIDED INFORMATION.
+- Cite the source filename for every claim when source metadata is available.
+- Never invent a paper title, author, result, methodology, statistic, or comparison.
+- If two or more papers are requested, compare them explicitly by filename and mark missing evidence as "Not provided in the indexed documents".
+- If evidence is insufficient, say so instead of guessing.
 - Avoid redundancy, repetition, or unnecessary commentary.
 """
